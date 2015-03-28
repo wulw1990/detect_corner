@@ -2,6 +2,7 @@
 #define _CONTOUR_CLASSIFIER_BASE_H_WULIWEI_BBNC_TSINGHUA_
 
 #include <vector>
+
 class ContourClassifierBase
 {
 public:
