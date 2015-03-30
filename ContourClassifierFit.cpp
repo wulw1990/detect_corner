@@ -22,6 +22,7 @@ void ContourClassifierFit::Classify(
 		//完整圆的检测，与其他检测完全无关，所以放在第一步
 		if (circle_dealer->detectFullCircle(_vvpoint[c], _vvinfo[c]))
 			continue;
+
 		DetectSegment(_vvpoint[c], _vvinfo[c]);
 		DetectCircleAfterSegment(_vvpoint[c], _vvinfo[c]);
 		
@@ -31,7 +32,7 @@ void ContourClassifierFit::Classify(
 		SetUnknown(_vvinfo[c]);
 
 		SetHighCurvature(_vvpoint[c], _vvinfo[c], 3 , 0.38);
-		//SetHighCurvature(_vvpoint[c], _vvinfo[c], 4, 0.4);
+
 	}
 }
 

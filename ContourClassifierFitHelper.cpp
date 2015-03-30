@@ -336,6 +336,9 @@ bool CircleDealer::detectFullCircle(const std::vector<Point>& vp, std::vector<Po
 	Point2d center;
 	double radius;
 	fitCircleLinear(vp, center, radius);
+	//printf("center : (%f, %f), radius : %f\n", center.x, center.y, radius);
+	if (!(radius > 0))
+		return false;
 
 	const double thresh = 1.0;//TODO : best thresh ?
 	bool is_full_circle = true;

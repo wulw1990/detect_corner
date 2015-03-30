@@ -92,11 +92,11 @@ private:
 		, Point2d& center, double& radius);
 	static double getError(Point2d& p, Point2d& center, double& radius)
 	{
-		double tmp = (center.x - p.x)*(center.x - p.x) + (center.y - p.y)*(center.y - p.y);
-		if (abs(tmp) < 1e-8)
-			tmp = 1e-8;
-		tmp = std::abs(std::sqrt(tmp) - radius);
-		return tmp;
+		double dis_sqaure= (center.x - p.x)*(center.x - p.x) + (center.y - p.y)*(center.y - p.y);
+		if (dis_sqaure < 1e-8)
+			dis_sqaure = 1e-8;
+		double dis = std::sqrt(dis_sqaure);
+		return std::abs(dis - radius);
 	}
 
 	static void fitCircleLinear(std::vector<Point> points, Point2d& center, double& radius);
