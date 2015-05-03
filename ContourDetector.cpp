@@ -1,6 +1,6 @@
 #include "ContourDetector.h"
 
-void ContourDetector::ThresholdSimple(cv::Mat& _img)
+void ContourDetector::thresholdSimple(cv::Mat& _img)
 {
 	assert(_img.type() == CV_8UC1);
 	for (int r = 0; r < _img.rows; ++r)
@@ -15,10 +15,10 @@ void ContourDetector::ThresholdSimple(cv::Mat& _img)
 	}
 }
 
-void ContourDetector::Detect(cv::Mat _img, std::vector<std::vector<cv::Point> >& _contours)
+void ContourDetector::detect(cv::Mat _img, std::vector<std::vector<cv::Point> >& _contours)
 {
 	assert(_img.type() == CV_8UC1);
-	ThresholdSimple(_img);
+	thresholdSimple(_img);
 	std::vector<cv::Vec4i> hierarchy;
 	cv::Mat img = _img.clone();
 	cv::findContours(img, _contours, hierarchy, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);

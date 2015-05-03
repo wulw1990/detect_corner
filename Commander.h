@@ -6,17 +6,17 @@
 
 using namespace std;
 
-class FileDealer
+class Commander
 {
 public:
 	vector<string> ls(string path);
-	void print_list(vector<string>& list);
+	void printList(vector<string>& list);
 	void sortFileList(vector<string>& list);
 	void mkdirRecursively(string path);
 	string pwd();
-
+	vector<string> readLines(string name);
 private:
-	std::string FileDealer::exec(string cmd);
+	string exec(string cmd);
 };
 
 

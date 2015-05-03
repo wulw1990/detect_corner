@@ -1,4 +1,4 @@
-#include "ContourClassifierFitHelper.h"
+#include "CornerDetectorFitHelper.h"
 #include <cassert>
 #include <iostream>
 
@@ -7,7 +7,7 @@
 
 
 //-------------------------------------------------------------------------------------------------LineDealer---------
-int ShapeDealer::Detect(
+int ShapeDealer::detect(
 	const std::vector<Point>& vp, int i_head, int len_max,
 	std::vector<PointInfo>& vi)
 {
@@ -55,7 +55,7 @@ void ShapeDealer::resetInfo(std::vector<PointInfo>& vi, int ip)
 	for (int i = i_head; i <= i_back; ++i)
 		vi[index(i, n_points)].Reset();
 }
-double ShapeDealer::TriangleHeight(const Point2d& pl, const Point2d& p, const Point2d& pr)
+double ShapeDealer::getTriangleHeight(const Point2d& pl, const Point2d& p, const Point2d& pr)
 {
 	assert(pl != pr);
 	double di = std::abs((pr.y - pl.y)*p.x - (pr.x - pl.x)*p.y + (pr.x*pl.y - pl.x*pr.y));
@@ -174,7 +174,7 @@ void LineDealer::merge(const std::vector<Point>& vp, std::vector<PointInfo>& vi)
 			for (int im = ipl + 1; im < ipr; ++im)
 			{
 				Point2d pm(vp[index(im, n_points)]);
-				if (TriangleHeight(pl, pm, pr) > thresh)
+				if (getTriangleHeight(pl, pm, pr) > thresh)
 				{
 					can_merge = false;
 					break;
@@ -199,7 +199,7 @@ void LineDealer::removeShort(std::vector<PointInfo>& vi)
 	const int n_points = (int)vi.size();
 	for (int ip = 0; ip < n_points; ++ip)
 	{
-		if (vi[ip].len < GetLenSure())
+		if (vi[ip].len < getLenSure())
 			resetInfo(vi, ip);
 	}
 }
@@ -207,7 +207,7 @@ bool LineDealer::isLineSure(const std::vector<PointInfo>& vi, int i)
 {
 	const int n_points = (int)vi.size();
 	const PointInfo& info = vi[index(i, n_points)];
-	return (info.type == PointType::LINE && info.len >= GetLenSure());
+	return (info.type == PointType::LINE && info.len >= getLenSure());
 }
 bool LineDealer::isValid(const std::vector<Point>& vp, int i_head, int len)
 {
@@ -262,7 +262,7 @@ std::vector<double> LineDealer::getErrorVec(const std::vector<Point>& vp, int i_
 	for (int index = i_head + 1; index < i_back; ++index)
 	{
 		Point2d p(vp[index%n_points]);
-		double error = TriangleHeight(pl, p, pr);
+		double error = getTriangleHeight(pl, p, pr);
 		error_vec.push_back(error);
 	}
 	return error_vec;

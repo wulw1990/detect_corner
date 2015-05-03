@@ -1,9 +1,10 @@
-#ifndef _CONTOUR_CLASSIFIER_BASE_H_WULIWEI_BBNC_TSINGHUA_
-#define _CONTOUR_CLASSIFIER_BASE_H_WULIWEI_BBNC_TSINGHUA_
+#pragma once
 
 #include <vector>
+#include <string>
+using namespace std;
 
-class ContourClassifierBase
+class CornerDetectorBase
 {
 public:
 	//定义一些所有子类共享的数据类型
@@ -24,7 +25,7 @@ public:
 		double y;
 		Point2d() : x(0), y(0){}
 		Point2d(double _x, double _y) : x(_x), y(_y){}
-		Point2d(ContourClassifierBase::Point p) : x(p.x), y(p.y){}
+		Point2d(CornerDetectorBase::Point p) : x(p.x), y(p.y){}
 		bool operator==(const Point2d& p)const{ return (x == p.x && y == p.y); }
 		bool operator!=(const Point2d& p)const{ return !(x == p.x && y == p.y); }
 	};
@@ -47,16 +48,16 @@ public:
 		}
 	};
 
-	virtual void Classify(
-		const std::vector<std::vector<Point> >& _vvpoint,
-		std::vector<std::vector<PointInfo> >& _vvinfo) = 0;//纯虚函数，子类必须实现
+	virtual void detect(
+		vector<vector<Point> >& _vvpoint,
+		vector<vector<PointInfo> >& _vvinfo) = 0;//纯虚函数，子类必须实现
 
-	virtual ~ContourClassifierBase() {}
+	virtual ~CornerDetectorBase() {}
 
 protected:
-	void ResizeToSame(
-		const std::vector<std::vector<Point> >& _vvpoint,
-		std::vector<std::vector<PointInfo> >& _vvinfo)
+	void resizeToSame(
+		const vector<vector<Point> >& _vvpoint,
+		vector<vector<PointInfo> >& _vvinfo)
 	{
 		_vvinfo.resize(_vvpoint.size());
 		for (int i = 0; i < (int)_vvpoint.size(); ++i)
@@ -70,6 +71,13 @@ protected:
 			i += n;
 		return i;
 	}
-};
 
-#endif
+public:
+	//依赖opencv部分
+	void drawContours(
+		int rows,
+		int cols,
+		const vector<vector<CornerDetectorBase::Point> >& _vvpoint,
+		const vector<vector<CornerDetectorBase::PointInfo> >& _vvinfo,
+		string save_name);
+};

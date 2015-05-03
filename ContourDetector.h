@@ -1,6 +1,4 @@
-#ifndef _CONTOUR_DETECTOR_H_WULIWEI_BBNC_TSINGHUA_
-#define _CONTOUR_DETECTOR_H_WULIWEI_BBNC_TSINGHUA_
-
+#pragma once
 #include "opencv2/opencv.hpp"
 
 class ContourDetector
@@ -12,10 +10,8 @@ public:
 	*	_contours -- all the contours detected
 	*	_img -- _img will be binaried, if not binary exactly
 	*/
-	void Detect(cv::Mat _img, std::vector<std::vector<cv::Point> >& _contours);
+	void detect(cv::Mat _img, std::vector<std::vector<cv::Point> >& _contours);
 
 private:
-	void ThresholdSimple(cv::Mat& _img);
+	void thresholdSimple(cv::Mat& _img);
 };
-
-#endif

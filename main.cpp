@@ -16,50 +16,39 @@
 #include <fstream>
 
 #include "ContourDetector.h"
-#include "ContourClassifierBase.h"
-#include "ContourClassifierFit.h"
-#include "ContourClassifierCurv.h"
+#include "CornerDetectorBase.h"
+#include "CornerDetectorFit.h"
+#include "CornerDetectorCurv.h"
 #include "Tester.h"
-#include "./system/FileDealer.h"
+#include "Commander.h"
 
-void FitCircleLinear(std::vector<cv::Point> points, cv::Point2d& center, double& radius);
+using namespace std;
+using namespace cv;
 
 int main()
 {
 #if 0
-	std::string base_name = "D:\\No_Backup_BBNC\\LingYun\\";
-	std::string base_name_output = "D:\\No_Backup_BBNC\\LingYun\\output_corner\\";
-
-	std::string list_name = "name_list.txt";
-	ContourClassifierFit* classifier = new ContourClassifierFit();
-
-	Tester* tester = new Tester();
-	tester->TestFileList(base_name, list_name, classifier, base_name_output);
-	//tester->TestOneInListFile(base_name, list_name, classifier, base_name_output, 0);
-#endif
-	std::string base_name = ".\\image\\";
+	clock_t start_time = clock();
+	Mat img = imread("D:\\No_Backup_BBNC\\LingYun\\\BMP_Gerber_zhao_big\\l1_big.bmp");
+	cout << img.size() << endl;
+	cout << "Read time : " << clock() - start_time << " ms" << endl;
+#else
+	string path_input = ".\\image\\";
+	string path_output = ".\\output\\";
 
 	//get input name list
-	FileDealer* file_dealer = new FileDealer();
-	cout << "pwd : " << file_dealer->pwd() << endl;
-	std::vector<std::string> list_name = file_dealer->ls(base_name);
-	file_dealer->print_list(list_name);
+	Commander* cmd = new Commander();
+	cout << "pwd : " << cmd->pwd() << endl;
+	vector<string> list = cmd->ls(path_input);
+	cmd->printList(list);
 
-	std::string base_name_output = ".\\output\\";
-	std::vector<std::string> list_name_output(list_name.size());
-
-	for (int i = 0, n_files = (int)list_name.size(); i < n_files; ++i)
-	{
-		std::string ext = list_name[i].substr(list_name[i].length() - 4, 4);
-		std::string name = list_name[i].substr(0, list_name[i].length() - 4);
-		list_name_output[i] = name + "_output" + ext;
-	}
-		
 	//test
-	ContourClassifierBase* classifier = new ContourClassifierFit();
-	//ContourClassifierBase* classifier = new ContourClassifierCurv(0.38f);
+	CornerDetectorBase* classifier = new CornerDetectorFit();
+	//CornerDetectorBase* classifier = new CornerDetectorCurv(0.38f);
 	Tester* tester = new Tester();
-	tester->TestFileList(base_name, list_name, classifier, base_name_output, list_name_output);
-
+	int id_head = 0;
+	int id_back = 10;
+	tester->test(path_input, list, id_head, id_back, classifier, path_output);
+#endif
 	system("pause");
 }

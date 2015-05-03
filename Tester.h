@@ -1,56 +1,27 @@
-#ifndef _TESTER_H_
-#define _TESTER_H_
+#pragma once
 
 #include <vector>
 #include <string>
-class ContourClassifierBase;
-class FileDealer;
+#include "opencv2/opencv.hpp"
+using namespace std;
+using namespace cv;
+class CornerDetectorBase;
+class Commander;
 
 class Tester
 {
 public:
-	Tester();
-
-	void TestFileList(
-		const std::string& base_name, 
-		const std::string& list_name,
-		ContourClassifierBase* classifier,
-		const std::string& base_name_output);
-
-	void TestFileList(
-		const std::string& base_name,
-		const std::vector<std::string>& name_list,
-		ContourClassifierBase* classifier,
-		const std::string& base_name_output,
-		const std::vector<std::string>& name_list_output);
-
-	void TestOneInListFile(
-		const std::string& base_name,
-		const std::string& list_name,
-		ContourClassifierBase* classifier,
-		const std::string& base_name_output,
-		int num);
+	void test(
+		string& path_input,
+		vector<string>& list,
+		int id_head,
+		int id_back,
+		CornerDetectorBase* classifier,
+		string& path_oputput);
 
 private:
-	FileDealer* file_dealer;
-
-	void TestFileList(
-		const std::string& base_name,
-		const std::vector<std::string>& name_list,
-		ContourClassifierBase* classifier,
-		const std::string& base_name_output);
-
-	void TestOneFile(
-		const std::string& full_name,
-		ContourClassifierBase* classifier,
-		const std::string& full_name_output);
-
-	void TestOneImage(
-		const std::string& full_name,
-		ContourClassifierBase* classifier,
-		const std::string& full_name_output);
-
-	std::vector<std::string> ReadNameList(std::string txt_name);
+	void testOne(
+		string name_input,
+		CornerDetectorBase* classifier,
+		string name_output);
 };
-
-#endif

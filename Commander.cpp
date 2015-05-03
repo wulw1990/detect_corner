@@ -1,12 +1,13 @@
-#include "FileDealer.h"
+#include "Commander.h"
 #include <cassert>
 #include <algorithm>
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 
-vector<string> FileDealer::ls(string path)
+vector<string> Commander::ls(string path)
 {
 	vector<string> result;
 	string cmd = string("dir /B ") + path;
@@ -21,19 +22,19 @@ vector<string> FileDealer::ls(string path)
 	return result;
 }
 
-void FileDealer::print_list(vector<string>& list)
+void Commander::printList(vector<string>& list)
 {
 	cout << "list : "<< endl;
 	for (int i = 0; i < (int)list.size(); ++i)
 		cout << i + 1 << "\t" << "--" << list[i] << "--"  << endl;
 }
 
-void FileDealer::mkdirRecursively(string path)
+void Commander::mkdirRecursively(string path)
 {
 	string cmd = string("mkdir ") + path;
 	exec(cmd);
 }
-string FileDealer::pwd()
+string Commander::pwd()
 {
 	return exec("chdir");
 }
@@ -53,14 +54,25 @@ static bool lessFile(string a, string b)
 	}
 	return a < b;
 }
-void FileDealer::sortFileList(vector<string>& list)
+
+vector<string> Commander::readLines(string name)
+{
+	std::ifstream fin(name.c_str());
+	std::vector<std::string> lines;
+	std::string line;
+	while (getline(fin,line))
+		lines.push_back(line);
+	return lines;
+}
+
+void Commander::sortFileList(vector<string>& list)
 {
 	sort(list.begin(), list.end(), lessFile);
 }
 
 
 //Replace popen and pclose with _popen and _pclose for Windows.
-string FileDealer::exec(string cmd) 
+string Commander::exec(string cmd) 
 {
 	FILE* pipe = _popen(cmd.c_str(), "r");
 	if (!pipe) return "ERROR";
