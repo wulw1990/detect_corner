@@ -8,7 +8,7 @@
 #include "ContourClassifierBase.h"
 #include "ContourDetector.h"
 #include "./show/Show.h"
-#include "./system_dependent/FileDealer.h"
+#include "./system/FileDealer.h"
 
 Tester::Tester()
 {
@@ -94,7 +94,7 @@ void Tester::TestOneFile(
 	if (location2 < 0 || location2 >= full_name_output.length())
 		location2 = -1;
 	int location = std::max(location1, location2);
-	file_dealer->CreatDir(full_name_output.substr(0, location));
+	file_dealer->mkdirRecursively(full_name_output.substr(0, location));
 	std::cout << "dir : " << full_name_output.substr(0, location) << std::endl;
 	std::cout << "location : " << location << std::endl;
 	TestOneImage(full_name, classifier, full_name_output);
