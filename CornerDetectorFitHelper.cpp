@@ -5,6 +5,12 @@
 #define SQUARE(x) ((x)*(x))
 #define PI 3.14159
 
+const double kErrorThreshShort = 0.6;
+const double kErrorThreshLong = 1.0;
+const double kRadiusMin = 5;
+const double kRadiusMax = 100;
+const double kRadianMin = 60;
+
 //-------------------------------------------------------------------------------------------------LineDealer---------
 int ShapeDealer::detect(
 	const std::vector<CPoint>& vp, int i_head, int len_max,
@@ -324,8 +330,8 @@ void LineDealer::setUnknown(vector<CPointInfo>& vi)
 //-------------------------------------------------------------------------------------------------CircleDealer---------
 CircleDealer::CircleDealer()
 {
-	length_thresh = { 10, 20, 100, 1000 };
-	error_thresh = { 0.6, 1.0, 1.0 };
+	length_thresh = { 10, 20, 1000 };
+	error_thresh = { 0.6, 1.0 };
 	//cir_error_aver_vec_ = { 1.1, 2.1, 3.1 };
 	radius_min = 5;
 	radius_max = 100;

@@ -13,6 +13,29 @@ public:
 		vector<vector<CPoint> >& vvp,
 		vector<vector<CPointInfo> >& vvi);
 
+	//setThresh
+	//功能：自定义阈值
+	//输入：
+	//	circle_error_thresh_short -- 短圆弧的最大误差（小于20个像素）
+	//	circle_error_thresh_long -- 长圆弧的最大误差
+	//	circle_radius_min -- 圆弧的最小半径
+	//	circle_radius_max -- 圆弧的最大半径
+	//	circle_radian_min -- 圆弧的最小弧度（单位是读，默认是60度）
+	void setThresh(
+		double circle_error_thresh_short = 0.6,
+		double circle_error_thresh_long = 1.0,
+		double circle_radius_min = 5,
+		double circle_radius_max = 100,
+		double circle_radian_min = 60)
+	{
+		circle_dealer->setThresh(
+			circle_error_thresh_short,
+			circle_error_thresh_long,
+			circle_radius_min,
+			circle_radius_max,
+			circle_radian_min);
+	}
+
 	CornerDetectorFit(){
 		line_dealer = new LineDealer();
 		circle_dealer = new CircleDealer();
@@ -54,4 +77,4 @@ private:
 	//输出：vi -- 与vp对应的每个点的信息
 	//其他参数（输入）：R -- 计算曲率时使用的半径，threshcurv -- 阈值
 	void setHighCurvature(vector<CPoint>& vp, vector<CPointInfo>& vi, int R, double threshcurv);
-};
+}; 

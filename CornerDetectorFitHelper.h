@@ -73,6 +73,19 @@ public:
 		vector<CPointInfo>& _vi);
 	int getLenThreshMax(){ return length_thresh[length_thresh.size() - 1]; }
 	void setUnknown(vector<CPointInfo>& vi);
+	void setThresh(
+		double circle_error_thresh_short = 0.6,
+		double circle_error_thresh_long = 1.0,
+		double circle_radius_min = 5,
+		double circle_radius_max = 100,
+		double circle_radian_min = 60)
+	{
+		error_thresh[0] = circle_error_thresh_short;
+		error_thresh[error_thresh.size() - 1] = circle_error_thresh_long;
+		radius_min = circle_radius_min;
+		radius_max = circle_radius_max;
+		radian_min = circle_radian_min;
+	}
 private:
 	double radius_min;
 	double radius_max;
