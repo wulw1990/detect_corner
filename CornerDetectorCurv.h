@@ -6,8 +6,8 @@ class CornerDetectorCurv : public CornerDetectorBase
 {
 public:
 	void detect(
-		std::vector<std::vector<Point> >& _vvpoint,
-		std::vector<std::vector<PointInfo> >& _vvinfo);
+		std::vector<std::vector<CPoint> >& _vvpoint,
+		std::vector<std::vector<CPointInfo> >& _vvinfo);
 
 	CornerDetectorCurv(double _t);
 private:
@@ -15,8 +15,8 @@ private:
 	double thresh_curv;
 
 	void classifyEach(
-		const std::vector<Point>& _vpoint,
-		std::vector<PointInfo>& _vinfo);
+		const std::vector<CPoint>& _vpoint,
+		std::vector<CPointInfo>& _vinfo);
 
-	double getTriangleHeight(const Point2d& pl, const Point2d& p, const Point2d& pr);
+	double getTriangleHeight(const CPoint2d& pl, const CPoint2d& p, const CPoint2d& pr);
 };

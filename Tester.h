@@ -24,4 +24,6 @@ private:
 		string name_input,
 		CornerDetectorBase* classifier,
 		string name_output);
+
+
 };

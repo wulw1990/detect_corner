@@ -5,11 +5,10 @@
 #define SQUARE(x) ((x)*(x))
 #define PI 3.14159
 
-
 //-------------------------------------------------------------------------------------------------LineDealer---------
 int ShapeDealer::detect(
-	const std::vector<Point>& vp, int i_head, int len_max,
-	std::vector<PointInfo>& vi)
+	const std::vector<CPoint>& vp, int i_head, int len_max,
+	std::vector<CPointInfo>& vi)
 {
 	//check input output
 	const int n_points = (int)vp.size();
@@ -45,7 +44,7 @@ int ShapeDealer::detect(
 	//没有valid
 	return 1;
 }
-void ShapeDealer::resetInfo(std::vector<PointInfo>& vi, int ip)
+void ShapeDealer::resetInfo(std::vector<CPointInfo>& vi, int ip)
 {
 	const int n_points = (int)vi.size();
 	ip = index(ip, n_points);
@@ -55,7 +54,7 @@ void ShapeDealer::resetInfo(std::vector<PointInfo>& vi, int ip)
 	for (int i = i_head; i <= i_back; ++i)
 		vi[index(i, n_points)].Reset();
 }
-double ShapeDealer::getTriangleHeight(const Point2d& pl, const Point2d& p, const Point2d& pr)
+double ShapeDealer::getTriangleHeight(const CPoint2d& pl, const CPoint2d& p, const CPoint2d& pr)
 {
 	assert(pl != pr);
 	double di = std::abs((pr.y - pl.y)*p.x - (pr.x - pl.x)*p.y + (pr.x*pl.y - pl.x*pr.y));
@@ -153,14 +152,14 @@ LineDealer::LineDealer()
 	error_thresh = { 0.1, 1.1, 2.1 };
 	len_sure = 20;
 }
-void LineDealer::merge(const std::vector<Point>& vp, std::vector<PointInfo>& vi)
+void LineDealer::merge(const std::vector<CPoint>& vp, std::vector<CPointInfo>& vi)
 {
 	const double thresh = 1.1;
 	const int n_points = (int)vp.size();
 	for (int ip = 0; ip < n_points; ++ip)
 	{
 		if (vi[ip].corner && vi[(ip + 1) % n_points].corner
-			&& (vi[ip].type == PointType::LINE) && (vi[(ip + 1) % n_points].type == PointType::LINE)
+			&& (vi[ip].type == CPointType::LINE) && (vi[(ip + 1) % n_points].type == CPointType::LINE)
 			&& (vi[ip].len >= len_sure || vi[(ip + 1) % n_points].len>=len_sure))
 		{
 			int ipl = vi[ip].i_head;
@@ -168,12 +167,12 @@ void LineDealer::merge(const std::vector<Point>& vp, std::vector<PointInfo>& vi)
 			if (ipr < ipl)
 				ipr += n_points;
 
-			Point2d pl(vp[index(ipl, n_points)]);
-			Point2d pr(vp[index(ipr, n_points)]);
+			CPoint2d pl(vp[index(ipl, n_points)]);
+			CPoint2d pr(vp[index(ipr, n_points)]);
 			bool can_merge = true;
 			for (int im = ipl + 1; im < ipr; ++im)
 			{
-				Point2d pm(vp[index(im, n_points)]);
+				CPoint2d pm(vp[index(im, n_points)]);
 				if (getTriangleHeight(pl, pm, pr) > thresh)
 				{
 					can_merge = false;
@@ -194,22 +193,13 @@ void LineDealer::merge(const std::vector<Point>& vp, std::vector<PointInfo>& vi)
 		}
 	}
 }
-void LineDealer::removeShort(std::vector<PointInfo>& vi)
+bool LineDealer::isLineSure(const std::vector<CPointInfo>& vi, int i)
 {
 	const int n_points = (int)vi.size();
-	for (int ip = 0; ip < n_points; ++ip)
-	{
-		if (vi[ip].len < getLenSure())
-			resetInfo(vi, ip);
-	}
+	const CPointInfo& info = vi[index(i, n_points)];
+	return (info.type == CPointType::LINE && info.len >= getLenSure());
 }
-bool LineDealer::isLineSure(const std::vector<PointInfo>& vi, int i)
-{
-	const int n_points = (int)vi.size();
-	const PointInfo& info = vi[index(i, n_points)];
-	return (info.type == PointType::LINE && info.len >= getLenSure());
-}
-bool LineDealer::isValid(const std::vector<Point>& vp, int i_head, int len)
+bool LineDealer::isValid(const std::vector<CPoint>& vp, int i_head, int len)
 {
 	//check input, output
 	const int n_points = (int)vp.size();
@@ -220,7 +210,9 @@ bool LineDealer::isValid(const std::vector<Point>& vp, int i_head, int len)
 
 	//calculate seg average error
 	const int sec_len = 10;
-	std::vector<double> error_vec = getErrorVec(vp, i_head, len);
+	vector<double> error_vec;
+	if (!getErrorVec(vp, i_head, len, error_thresh[error_thresh.size() - 1], error_vec))
+		return false;//尽早退出
 	double error_max = vecMax(error_vec);
 	double error_sec_aver_max = secAverageMax(error_vec, sec_len);
 	double error_sec_aver_max_end = secAverageMaxEnd(error_vec, sec_len);
@@ -252,28 +244,30 @@ bool LineDealer::isValid(const std::vector<Point>& vp, int i_head, int len)
 	//OK
 	return true;
 }
-std::vector<double> LineDealer::getErrorVec(const std::vector<Point>& vp, int i_head, int len)
+bool LineDealer::getErrorVec(const std::vector<CPoint>& vp, int i_head, int len, double max_error, vector<double>& error_vec)
 {
-	std::vector<double> error_vec;
+	error_vec.clear();
 	const int n_points = (int)vp.size();
 	int i_back = i_head + len - 1;
-	Point2d pl(vp[i_head%n_points]);
-	Point2d pr(vp[i_back%n_points]);
+	CPoint2d pl(vp[i_head%n_points]);
+	CPoint2d pr(vp[i_back%n_points]);
 	for (int index = i_head + 1; index < i_back; ++index)
 	{
-		Point2d p(vp[index%n_points]);
+		CPoint2d p(vp[index%n_points]);
 		double error = getTriangleHeight(pl, p, pr);
 		error_vec.push_back(error);
+		if (error > max_error)
+			return false;
 	}
-	return error_vec;
+	return true;
 }
-void LineDealer::setInfo(const std::vector<Point>& vp, int i_head, int len, std::vector<PointInfo>& vi)
+void LineDealer::setInfo(const std::vector<CPoint>& vp, int i_head, int len, std::vector<CPointInfo>& vi)
 {
 	const int n_points = (int)vp.size();
 	int i_back = i_head + len - 1;
 	for (int i = i_head; i <= i_back; ++i)
 	{
-		if (vi[index(i, n_points)].type == PointType::LINE)
+		if (vi[index(i, n_points)].type == CPointType::LINE)
 		{
 			/*resetInfo(vi, i);
 			break;*/
@@ -295,7 +289,7 @@ void LineDealer::setInfo(const std::vector<Point>& vp, int i_head, int len, std:
 				{
 					for (int i = i_back + 1; i <= i_back_old; ++i)
 					{
-						vi[index(i, n_points)].type = PointType::LINE;
+						vi[index(i, n_points)].type = CPointType::LINE;
 						vi[index(i, n_points)].i_head = i_back + 1;
 						vi[index(i, n_points)].len = i_back_old - i_back;
 						//std::cout << "i_back_old - i_back : " << i_back_old - i_back << std::endl;
@@ -309,13 +303,23 @@ void LineDealer::setInfo(const std::vector<Point>& vp, int i_head, int len, std:
 	}
 	for (int i = i_head; i <= i_back; ++i)
 	{
-		vi[index(i, n_points)].type = PointType::LINE;
+		vi[index(i, n_points)].type = CPointType::LINE;
 		vi[index(i, n_points)].i_head = i_head;
 		vi[index(i, n_points)].len = len;
 		vi[index(i, n_points)].corner = false;
 	}
 	vi[i_head % n_points].corner = true;
 	vi[i_back % n_points].corner = true;
+}
+void LineDealer::setUnknown(vector<CPointInfo>& vi)
+{
+	int n_points = (int)vi.size();
+	int min_length = 30;
+	for (int i = 0; i < n_points; ++i)
+	{
+		if (vi[i].type != CPointType::UNKOWN && vi[i].len < min_length)
+			ShapeDealer::resetInfo(vi, i);
+	}
 }
 //-------------------------------------------------------------------------------------------------CircleDealer---------
 CircleDealer::CircleDealer()
@@ -326,14 +330,14 @@ CircleDealer::CircleDealer()
 	radius_min = 5;
 	radius_max = 100;
 	radian_min = 60 / 180.0 * PI;
-	center_ = Point2d(-1, -1);
+	center_ = CPoint2d(-1, -1);
 	radius_ = -1;
 }
-bool CircleDealer::detectFullCircle(const std::vector<Point>& vp, std::vector<PointInfo>& vi)
+bool CircleDealer::detectFullCircle(const std::vector<CPoint>& vp, std::vector<CPointInfo>& vi)
 {
 	const int n_points = (int)vp.size();
 	assert(n_points >= 3);//线性拟合的前提条件
-	Point2d center;
+	CPoint2d center;
 	double radius;
 	fitCircleLinear(vp, center, radius);
 	//printf("center : (%f, %f), radius : %f\n", center.x, center.y, radius);
@@ -344,18 +348,18 @@ bool CircleDealer::detectFullCircle(const std::vector<Point>& vp, std::vector<Po
 	bool is_full_circle = true;
 	for (int i = 0; i < n_points; ++i)//大部分轮廓不用计算所有误差（break）
 	{
-		Point2d p(vp[i]);
+		CPoint2d p(vp[i]);
 		if (getError(p, center, radius) > thresh)
 		{
 			is_full_circle = false;
-			break;
+			break;//尽早退出
 		}
 	}
 	if (is_full_circle)
 	{
 		for (int i = 0; i < n_points; ++i)
 		{
-			vi[index(i, n_points)].type = PointType::FULL_CIRCLE;
+			vi[index(i, n_points)].type = CPointType::FULL_CIRCLE;
 			vi[index(i, n_points)].i_head = 0;
 			vi[index(i, n_points)].len = n_points;
 			vi[index(i, n_points)].corner = false;
@@ -365,7 +369,7 @@ bool CircleDealer::detectFullCircle(const std::vector<Point>& vp, std::vector<Po
 	else
 		return false;
 }
-void CircleDealer::merge(const std::vector<Point>& vp, std::vector<PointInfo>& vi)
+void CircleDealer::merge(const std::vector<CPoint>& vp, std::vector<CPointInfo>& vi)
 {
 	const int n_points = (int)vp.size();
 	for (int ip = 0; ip < n_points; ++ip)
@@ -376,7 +380,7 @@ void CircleDealer::merge(const std::vector<Point>& vp, std::vector<PointInfo>& v
 			int len_new = vi[ip].len + vi[(ip + 1) % n_points].len;
 			getCircle(vp, i_head_new, len_new, center_, radius_);
 
-			Point2d p(vp[ip]);
+			CPoint2d p(vp[ip]);
 			double error = (center_.x - p.x)*(center_.x - p.x) + (center_.y - p.y)*(center_.y - p.y);
 			if (abs(error) < 1e-8)
 				error = 1e-8;
@@ -386,7 +390,7 @@ void CircleDealer::merge(const std::vector<Point>& vp, std::vector<PointInfo>& v
 		}
 	}
 }
-bool CircleDealer::isValid(const std::vector<Point>& vp, int i_head, int len)
+bool CircleDealer::isValid(const std::vector<CPoint>& vp, int i_head, int len)
 {
 	//用到成员变量center_， radius_
 	//check input, output
@@ -426,7 +430,9 @@ bool CircleDealer::isValid(const std::vector<Point>& vp, int i_head, int len)
 	//calculate error
 	const int sec_len = 10;
 	//std::cout << "sec_len : " << sec_len << std::endl;
-	std::vector<double> error_vec = getErrorVec(vp, i_head, len);
+	std::vector<double> error_vec;
+	if (!getErrorVec(vp, i_head, len, error_thresh[error_thresh.size() - 1], error_vec))
+		return false;//尽早退出
 	//std::cout << "error_vec : " << error_vec.size() << std::endl;
 
 	double error_max = vecMax(error_vec);
@@ -445,38 +451,40 @@ bool CircleDealer::isValid(const std::vector<Point>& vp, int i_head, int len)
 	return true;
 	
 }
-std::vector<double> CircleDealer::getErrorVec(const std::vector<Point>& vp, int i_head, int len
-	, Point2d& center, double& radius)
+bool CircleDealer::getErrorVec(const std::vector<CPoint>& vp, int i_head, int len, double max_error, vector<double>& error_vec
+	, CPoint2d& center, double& radius)
 {
-	std::vector<double> error_vec;
+	error_vec.clear();
 	const int n_points = (int)vp.size();
 	const int i_back = i_head + len - 1;
 	for (int index = i_head; index <= i_back; ++index)
 	{
-		Point2d p(vp[index%n_points]);
+		CPoint2d p(vp[index%n_points]);
 		double tmp = (center.x - p.x)*(center.x - p.x) + (center.y - p.y)*(center.y - p.y);
 		if (abs(tmp) < 1e-8)
 			tmp = 1e-8;
 		tmp = std::abs(std::sqrt(tmp) - radius);
 		error_vec.push_back(tmp);
+		if (tmp > max_error)
+			return false;
 	}
-	return error_vec;
+	return true;
 }
-std::vector<double> CircleDealer::getErrorVec(const std::vector<Point>& vp, int i_head, int len)
+bool CircleDealer::getErrorVec(const vector<CPoint>& vp, int i_head, int len, double max_error, vector<double>& error_vec)
 {
 	//用到成员变量center_， radius_
-	return getErrorVec(vp, i_head, len, center_, radius_);
+	return getErrorVec(vp, i_head, len, max_error, error_vec, center_, radius_);
 }
-void CircleDealer::setInfo(const std::vector<Point>& vp, int i_head, int len, std::vector<PointInfo>& vi)
+void CircleDealer::setInfo(const std::vector<CPoint>& vp, int i_head, int len, std::vector<CPointInfo>& vi)
 {
 	const int n_points = (int)vp.size();
 	int i_back = i_head + len - 1;
 	for (int i = i_head; i <= i_back; ++i)
-		if (vi[index(i, n_points)].type != PointType::CIRCLE && vi[index(i, n_points)].type != PointType::UNKOWN)
+		if (vi[index(i, n_points)].type != CPointType::CIRCLE && vi[index(i, n_points)].type != CPointType::UNKOWN)
 			resetInfo(vi, i);
 	for (int i = i_head; i <= i_back; ++i)
 	{
-		if (vi[index(i, n_points)].type == PointType::CIRCLE)
+		if (vi[index(i, n_points)].type == CPointType::CIRCLE)
 		{
 			int i_head_old = vi[index(i, n_points)].i_head ;
 			int len_old = vi[index(i, n_points)].len;
@@ -496,7 +504,7 @@ void CircleDealer::setInfo(const std::vector<Point>& vp, int i_head, int len, st
 				{
 					for (int i = i_back + 1; i <= i_back_old; ++i)
 					{
-						vi[index(i, n_points)].type = PointType::CIRCLE;
+						vi[index(i, n_points)].type = CPointType::CIRCLE;
 						vi[index(i, n_points)].i_head = i_back + 1;
 						vi[index(i, n_points)].len = i_back_old - i_back;
 						//std::cout << "i_back_old - i_back : " << i_back_old - i_back << std::endl;
@@ -510,7 +518,7 @@ void CircleDealer::setInfo(const std::vector<Point>& vp, int i_head, int len, st
 	}
 	for (int i = i_head; i <= i_back; ++i)
 	{
-		vi[index(i, n_points)].type = PointType::CIRCLE;
+		vi[index(i, n_points)].type = CPointType::CIRCLE;
 		vi[index(i, n_points)].i_head = i_head;
 		vi[index(i, n_points)].len = len;
 		vi[index(i, n_points)].corner = false;
@@ -518,8 +526,18 @@ void CircleDealer::setInfo(const std::vector<Point>& vp, int i_head, int len, st
 	vi[i_head % n_points].corner = true;
 	vi[i_back % n_points].corner = true;
 }
+void CircleDealer::setUnknown(vector<CPointInfo>& vi)
+{
+	int n_points = (int)vi.size();
+	int min_length = 30;
+	for (int i = 0; i < n_points; ++i)
+	{
+		if (vi[i].type != CPointType::UNKOWN && vi[i].len < min_length)
+			ShapeDealer::resetInfo(vi, i);
+	}
+}
 void CircleDealer::getCircle(
-	const std::vector<Point>& vp, int i_head, int len, Point2d& center, double& radius)
+	const std::vector<CPoint>& vp, int i_head, int len, CPoint2d& center, double& radius)
 {
 	//check input output
 	const int n_points = (int)vp.size();
@@ -528,21 +546,21 @@ void CircleDealer::getCircle(
 	int mid = ((i_head + i_back) / 2) % n_points;
 	int right = i_back%n_points;
 
-	center = Point2d(-1, -1);
+	center = CPoint2d(-1, -1);
 	radius = -1;
 	if (left == mid || mid == right || right == left)
 		return;
 
 	//TODO : more accurate, RANSAC ? 
 	//calculate
-	Point2d p1(vp[left]);
-	Point2d p2(vp[mid]);
-	Point2d p3(vp[right]);
+	CPoint2d p1(vp[left]);
+	CPoint2d p2(vp[mid]);
+	CPoint2d p3(vp[right]);
 	getCircle(p1, p2, p3, center, radius);
 }
 void CircleDealer::getCircle(
-	const Point2d& p1, const Point2d& p2, const Point2d& p3,
-	Point2d& _center, double& _radius)
+	const CPoint2d& p1, const CPoint2d& p2, const CPoint2d& p3,
+	CPoint2d& _center, double& _radius)
 {
 	double x1 = p1.x;
 	double x2 = p2.x;
@@ -562,24 +580,24 @@ void CircleDealer::getCircle(
 	_radius = std::sqrt((_center.x - x1)*(_center.x - x1) + (_center.y - y1)*(_center.y - y1));
 }
 void CircleDealer::getCircleLinear(
-	const std::vector<Point>& vp, int i_head, int len, Point2d& center, double& radius)
+	const std::vector<CPoint>& vp, int i_head, int len, CPoint2d& center, double& radius)
 {
-	std::vector<Point> points;
+	std::vector<CPoint> points;
 	for (int i = i_head, i_back = i_head + len - 1; i <= i_back; ++i)
 		points.push_back(vp[i]);
 	fitCircleLinear(points, center, radius);
 }
 
 void CircleDealer::completeCircle(
-	const std::vector<Point>& _c,
-	std::vector<PointInfo>& _vi)
+	const std::vector<CPoint>& _c,
+	std::vector<CPointInfo>& _vi)
 {
 	const int n_points = (int)_vi.size();
 
 	//如果一个轮廓只有少部分点不是属于Circle，则说明该轮廓是一个完整的圆
 	int count_other_point = 0;
 	for (int ip = 0; ip < n_points; ++ip)
-		if (_vi[ip].type != PointType::CIRCLE)
+		if (_vi[ip].type != CPointType::CIRCLE)
 			++count_other_point;
 	if (count_other_point <= 10)//TODO 3 or 10 ?
 	{
@@ -598,7 +616,7 @@ void CircleDealer::completeCircle(
 				_vi[ip].corner = false;
 				_vi[ip].i_head = 0;
 				_vi[ip].len = n_points;
-				_vi[ip].type = PointType::CIRCLE;
+				_vi[ip].type = CPointType::CIRCLE;
 			}
 		}
 	}
@@ -610,7 +628,7 @@ void CircleDealer::completeCircle(
 		int circle_length_max = 0;
 		for (int p = 0; p <n_points; ++p)
 		{
-			if (_vi[p].type == PointType::CIRCLE && _vi[p].len > circle_length_max)
+			if (_vi[p].type == CPointType::CIRCLE && _vi[p].len > circle_length_max)
 				circle_length_max = _vi[p].len;
 
 		}
@@ -621,7 +639,7 @@ void CircleDealer::completeCircle(
 				_vi[ip].corner = false;
 				_vi[ip].i_head = 0;
 				_vi[ip].len = n_points;
-				_vi[ip].type = PointType::CIRCLE;
+				_vi[ip].type = CPointType::CIRCLE;
 			}
 		}
 	}
@@ -631,7 +649,7 @@ void CircleDealer::completeCircle(
 
 //TODO : 这里使用了opencv，之后可以使用主要是因为计算b = (A.t()*A).inv()*A.t()*Y;
 #include "opencv2/opencv.hpp"
-void CircleDealer::fitCircleLinear(std::vector<Point> points, Point2d& center, double& radius)
+void CircleDealer::fitCircleLinear(std::vector<CPoint> points, CPoint2d& center, double& radius)
 {
 	const int n = (int)points.size();
 	assert(n >= 3);

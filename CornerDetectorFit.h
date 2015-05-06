@@ -5,9 +5,13 @@
 class CornerDetectorFit : public CornerDetectorBase
 {
 public:
+	//detect
+	//由外部调用的方法
+	//实现基类CornerDetectorBase中的纯虚函数
+	//具体说明见CornerDetectorBase.h
 	void detect(
-		vector<vector<Point> >& _vvpoint,
-		vector<vector<PointInfo> >& _vvinfo);
+		vector<vector<CPoint> >& vvp,
+		vector<vector<CPointInfo> >& vvi);
 
 	CornerDetectorFit(){
 		line_dealer = new LineDealer();
@@ -19,15 +23,35 @@ public:
 	}
 
 private:
+	//LineDealer和CircleDealer的定义在CornerDetectorFitHelper中
+	//功能：协助处理线段和圆弧
 	LineDealer* line_dealer;
 	CircleDealer* circle_dealer;
 
+	//detectSegment
+	//功能：对一个轮廓进行线段检测
+	//输入：vp -- 一个轮廓对应的所有点
+	//输出：vi -- 与vp对应的每个点的信息
 	void detectSegment(
-		vector<Point>& _c,
-		vector<struct PointInfo>& _vi);
+		vector<CPoint>& vp,
+		vector<CPointInfo>& vi);
+
+	//detectCircleAfterSegment
+	//功能：在检测完线段后，进行圆弧检测
+	//输入：vp -- 一个轮廓对应的所有点
+	//输出：vi -- 与vp对应的每个点的信息
 	void detectCircleAfterSegment(
-		vector<Point>& _c,
-		vector<struct PointInfo>& _vi);
-	void setUnknown(vector<struct PointInfo>& _vi);
-	void setHighCurvature(vector<Point>& vp, vector<PointInfo>& vi, int r_, double thresh_curv);
+		vector<CPoint>& vp,
+		vector<CPointInfo>& vi);
+
+	//setUnknown
+	//功能：检测完后，将短的部分置为未知曲线
+	void setUnknown(vector<CPointInfo>& vi);
+
+	//setHighCurvature
+	//功能：未知曲线部分检测拐点
+	//输入：vp -- 一个轮廓对应的所有点
+	//输出：vi -- 与vp对应的每个点的信息
+	//其他参数（输入）：R -- 计算曲率时使用的半径，threshcurv -- 阈值
+	void setHighCurvature(vector<CPoint>& vp, vector<CPointInfo>& vi, int R, double threshcurv);
 };

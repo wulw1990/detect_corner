@@ -1,78 +1,81 @@
 #include "CornerDetectorFit.h"
+#include <iostream>
 
 #define SQUARE(x) ((x)*(x))
+#define DEBUG 1
 
 void CornerDetectorFit::detect(
-	vector<vector<Point> >& _vvpoint,
-	vector<vector<PointInfo> >& _vvinfo)
+	vector<vector<CPoint> >& vvp,
+	vector<vector<CPointInfo> >& vvi)
 {
-	resizeToSame(_vvpoint, _vvinfo);
-	for (int c = 0; c < (int)_vvpoint.size(); ++c)
+	resizeToSame(vvp, vvi);
+	for (int c = 0; c < (int)vvp.size(); ++c)
 	{
-		if ((int)_vvpoint[c].size() <= 5) continue;
-		if (circle_dealer->detectFullCircle(_vvpoint[c], _vvinfo[c])) continue;
+		//过滤掉太小的圆弧
+		if ((int)vvp[c].size() <= 5) continue;
 
-		detectSegment(_vvpoint[c], _vvinfo[c]);
-		detectCircleAfterSegment(_vvpoint[c], _vvinfo[c]);
-		
-		line_dealer->merge(_vvpoint[c], _vvinfo[c]);//segment larger than 1000
-		line_dealer->removeShort(_vvinfo[c]);
-		setUnknown(_vvinfo[c]);
-		setHighCurvature(_vvpoint[c], _vvinfo[c], 3 , 0.38);
+		//检测完整圆弧
+		if (circle_dealer->detectFullCircle(vvp[c], vvi[c])) continue;
+
+		//检测线段
+		detectSegment(vvp[c], vvi[c]);
+
+		//检测圆弧
+		detectCircleAfterSegment(vvp[c], vvi[c]);
+
+		//线段的合并和去除短线段
+		line_dealer->merge(vvp[c], vvi[c]);
+
+		//将不确定部分置为未知
+		setUnknown(vvi[c]);
+
+		//对位置曲线部分进行拐点检测
+		setHighCurvature(vvp[c], vvi[c], 3 , 0.38);
 	}
 }
-
-//--Segment ------------------------------------------------
 void CornerDetectorFit::detectSegment(
-	vector<Point>& _c,
-	vector<struct PointInfo>& _vi)
+	vector<CPoint>& vp,
+	vector<CPointInfo>& vi)
 {
-	int n_points = (int)_c.size();
+	int n_points = (int)vp.size();
 	for (int i = 0; i < (int)n_points;)
 	{
 		bool flag_success = false;
 		int len_max = line_dealer->getLenThreshMax();
-		i += line_dealer->detect(_c, i, len_max, _vi);
+		i += line_dealer->detect(vp, i, len_max, vi);
 	}
 }
-
 void CornerDetectorFit::detectCircleAfterSegment(
-	vector<Point>& _c,
-	vector<struct PointInfo>& _vi)
+	vector<CPoint>& vp,
+	vector<CPointInfo>& vi)
 {
-	int n_points = (int)_c.size();
+	int n_points = (int)vp.size();
 	for (int i_head = 0; i_head < (int)n_points; ++i_head)
 	{
-		if (line_dealer->isLineSure(_vi, i_head))
+		if (line_dealer->isLineSure(vi, i_head))
 			continue;
-		int cir_length_max = circle_dealer->getLenThreshMax();
+		int cirlength_max = circle_dealer->getLenThreshMax();
 
 		int i_back = i_head + 1;
 		int max_length_small_seg = 0;
-		for (int i_back_max = i_head + cir_length_max - 1; i_back <= i_back_max; ++i_back)
+		for (int i_back_max = i_head + cirlength_max - 1; i_back <= i_back_max; ++i_back)
 		{
-			if (line_dealer->isLineSure(_vi, i_back))
+			if (line_dealer->isLineSure(vi, i_back))
 				break;
 		}
 		i_back -= 1;//最后一个符合条件的点
 		int len_max = i_back - i_head + 1;
 		
-		int len = circle_dealer->detect(_c, i_head, len_max, _vi);
+		int len = circle_dealer->detect(vp, i_head, len_max, vi);
 		i_head = i_head + len - 1;
 	}
 }
-void CornerDetectorFit::setUnknown(vector<struct PointInfo>& _vi)
+void CornerDetectorFit::setUnknown(vector<CPointInfo>& vi)
 {
-	int n_points = (int)_vi.size();
-	int min_length = 30;
-	for (int i = 0; i < n_points; ++i)
-	{
-		if (_vi[i].type!=PointType::UNKOWN && _vi[i].len < min_length)
-			ShapeDealer::resetInfo(_vi, i);
-	}
-		
+	line_dealer->setUnknown(vi);
+	circle_dealer->setUnknown(vi);
 }
-double getTriangleHeight(Point2d& pl, Point2d& p, Point2d& pr)
+double getTriangleHeight(CPoint2d& pl, CPoint2d& p, CPoint2d& pr)
 {
 	if (pl == pr)
 		return 0;
@@ -80,32 +83,32 @@ double getTriangleHeight(Point2d& pl, Point2d& p, Point2d& pr)
 	di /= sqrt(SQUARE(pr.x - pl.x) + SQUARE(pr.y - pl.y));
 	return di;
 }
-void CornerDetectorFit::setHighCurvature(vector<Point>& vp, vector<PointInfo>& vi, int r_, double thresh_curv)
+void CornerDetectorFit::setHighCurvature(vector<CPoint>& vp, vector<CPointInfo>& vi, int R, double threshcurv)
 {
-	//int r_ = 3;
-	//double thresh_curv = 0.38f;
+	//int R = 3;
+	//double threshcurv = 0.38f;
 	int n_points = (int)vp.size();
-	if (n_points < (r_ * 2 + 1))
+	if (n_points < (R * 2 + 1))
 		return;
 	vector<double> thetas(n_points);
 	for (int ip = 0; ip < n_points; ++ip)
 	{
-		if (vi[ip].type != PointType::UNKOWN)
+		if (vi[ip].type != CPointType::UNKOWN)
 		{
 			thetas[ip] = 0;
 			continue;
 		}
-		int ipl = ip - r_;
+		int ipl = ip - R;
 		ipl = (ipl < 0 ? ipl + n_points : ipl);
-		int ipr = ip + r_;
+		int ipr = ip + R;
 		ipr = (ipr >= n_points ? ipr - n_points : ipr);
 
-		Point2d p(vp[ip]);
-		Point2d pl(vp[ipl]);
-		Point2d pr(vp[ipr]);
+		CPoint2d p(vp[ip]);
+		CPoint2d pl(vp[ipl]);
+		CPoint2d pr(vp[ipr]);
 
 		double h = getTriangleHeight(pl, p, pr);
-		thetas[ip] = asin(h / r_);
+		thetas[ip] = asin(h / R);
 	}
 	for (int ip = 0; ip < n_points; ++ip)
 	{
@@ -114,7 +117,7 @@ void CornerDetectorFit::setHighCurvature(vector<Point>& vp, vector<PointInfo>& v
 		int ipr = ip + 1;
 		ipr = (ipr >= n_points ? ipr - n_points : ipr);
 
-		if (thetas[ip]>thresh_curv && thetas[ip] >= thetas[ipl] && thetas[ip] >= thetas[ipr])
+		if (thetas[ip]>threshcurv && thetas[ip] >= thetas[ipl] && thetas[ip] >= thetas[ipr])
 			vi[ip].curv_corner = true;
 	}
 }

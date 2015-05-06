@@ -12,8 +12,8 @@ thresh_curv(_t)
 
 
 void CornerDetectorCurv::detect(
-	std::vector<std::vector<Point> >& _vvpoint,
-	std::vector<std::vector<PointInfo> >& _vvinfo)
+	std::vector<std::vector<CPoint> >& _vvpoint,
+	std::vector<std::vector<CPointInfo> >& _vvinfo)
 {
 	resizeToSame(_vvpoint, _vvinfo);
 	for (int c = 0; c < (int)_vvpoint.size(); ++c)
@@ -21,8 +21,8 @@ void CornerDetectorCurv::detect(
 }
 
 void CornerDetectorCurv::classifyEach(
-	const std::vector<Point>& _vpoint,
-	std::vector<PointInfo>& _vinfo)
+	const std::vector<CPoint>& _vpoint,
+	std::vector<CPointInfo>& _vinfo)
 {
 	const int n_points = (int)_vpoint.size();
 	if (n_points < (r_ * 2 + 1))
@@ -35,9 +35,9 @@ void CornerDetectorCurv::classifyEach(
 		int ipr = ip + r_;
 		ipr = (ipr >= n_points ? ipr - n_points : ipr);
 
-		Point2d p(_vpoint[ip]);
-		Point2d pl(_vpoint[ipl]);
-		Point2d pr(_vpoint[ipr]);
+		CPoint2d p(_vpoint[ip]);
+		CPoint2d pl(_vpoint[ipl]);
+		CPoint2d pr(_vpoint[ipr]);
 
 		double h = getTriangleHeight(pl, p, pr);
 		thetas[ip] = std::asin(h / r_);	
@@ -55,7 +55,7 @@ void CornerDetectorCurv::classifyEach(
 }
 
 
-double CornerDetectorCurv::getTriangleHeight(const Point2d& pl, const Point2d& p, const Point2d& pr)
+double CornerDetectorCurv::getTriangleHeight(const CPoint2d& pl, const CPoint2d& p, const CPoint2d& pr)
 {
 	if (pl == pr)
 		return 0;

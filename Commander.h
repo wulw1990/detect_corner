@@ -1,5 +1,5 @@
-#ifndef _FILE_DEALER_H_
-#define _FILE_DEALER_H_
+#ifndef _COMANDER_H_
+#define _COMANDER_H_
 
 #include <string>
 #include <vector>
@@ -18,9 +18,5 @@ public:
 private:
 	string exec(string cmd);
 };
-
-
-
-
 
 #endif
