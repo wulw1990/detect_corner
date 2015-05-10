@@ -86,6 +86,7 @@ public:
 		radius_max = circle_radius_max;
 		radian_min = circle_radian_min;
 	}
+	static void testMatrix();
 private:
 	double radius_min;
 	double radius_max;
@@ -116,4 +117,9 @@ private:
 	}
 
 	static void fitCircleLinear(vector<CPoint> points, CPoint2d& center, double& radius);
+	static vector<vector<double> > matrixMultiply(vector<vector<double> >A, vector<vector<double> >B);
+	static vector<vector<double> > matrixInvert(vector<vector<double> >A);
+	static vector<vector<double> > matrixTrans(vector<vector<double> >A);
+	
+
 };

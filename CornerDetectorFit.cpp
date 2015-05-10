@@ -31,6 +31,9 @@ void CornerDetectorFit::detect(
 
 		//对位置曲线部分进行拐点检测
 		setHighCurvature(vvp[c], vvi[c], 3 , 0.38);
+
+		//设置切点
+		setQieDian(vvi[c]);
 	}
 }
 void CornerDetectorFit::detectSegment(
@@ -119,5 +122,19 @@ void CornerDetectorFit::setHighCurvature(vector<CPoint>& vp, vector<CPointInfo>&
 
 		if (thetas[ip]>threshcurv && thetas[ip] >= thetas[ipl] && thetas[ip] >= thetas[ipr])
 			vi[ip].curv_corner = true;
+	}
+}
+void CornerDetectorFit::setQieDian(vector<CPointInfo>& vi)
+{
+	const int n = (int)vi.size();
+	for (int i = 0; i < n; ++i){
+		if (vi[index(i, n)].corner == true && vi[index(i, n)].type == CPointType::LINE && vi[index(i - 1, n)].type == CPointType::CIRCLE)
+			vi[index(i, n)].qie_dian = true;
+		else if (vi[index(i, n)].corner == true && vi[index(i, n)].type == CPointType::CIRCLE && vi[index(i - 1, n)].type == CPointType::LINE)
+			vi[index(i, n)].qie_dian = true;
+		else  if (vi[index(i, n)].corner == true && vi[index(i, n)].type == CPointType::CIRCLE && vi[index(i + 1, n)].type == CPointType::LINE)
+			vi[index(i, n)].qie_dian = true;
+		else  if (vi[index(i, n)].corner == true && vi[index(i, n)].type == CPointType::CIRCLE && vi[index(i + 1, n)].type == CPointType::LINE)
+			vi[index(i, n)].qie_dian = true;
 	}
 }

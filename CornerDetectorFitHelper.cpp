@@ -45,7 +45,7 @@ int ShapeDealer::detect(
 				}
 			}
 		}
-		
+
 	}
 	//没有valid
 	return 1;
@@ -166,7 +166,7 @@ void LineDealer::merge(const std::vector<CPoint>& vp, std::vector<CPointInfo>& v
 	{
 		if (vi[ip].corner && vi[(ip + 1) % n_points].corner
 			&& (vi[ip].type == CPointType::LINE) && (vi[(ip + 1) % n_points].type == CPointType::LINE)
-			&& (vi[ip].len >= len_sure || vi[(ip + 1) % n_points].len>=len_sure))
+			&& (vi[ip].len >= len_sure || vi[(ip + 1) % n_points].len >= len_sure))
 		{
 			int ipl = vi[ip].i_head;
 			int ipr = vi[index(ip + 1, n_points)].i_head + vi[index(ip + 1, n_points)].len - 1;
@@ -192,7 +192,7 @@ void LineDealer::merge(const std::vector<CPoint>& vp, std::vector<CPointInfo>& v
 				int i_head_new = vi[ip].i_head;
 				int len_new = vi[ip].len + vi[(ip + 1) % n_points].len;
 				resetInfo(vi, ip);
-				resetInfo(vi, ip+1);
+				resetInfo(vi, ip + 1);
 				setInfo(vp, i_head_new, len_new, vi);
 			}
 			//std::cout << "\t" << ip << std::endl;
@@ -408,7 +408,7 @@ bool CircleDealer::isValid(const std::vector<CPoint>& vp, int i_head, int len)
 
 	//getCircleLinear(vp, i_head, len, center_, radius_);
 	getCircle(vp, i_head, len, center_, radius_);
-	
+
 	//std::cout << "circle : " << center_.x << std::endl;
 	if (!(radius_ > 0))//note : not if(radius<=0), -NAN
 		return false;
@@ -455,7 +455,7 @@ bool CircleDealer::isValid(const std::vector<CPoint>& vp, int i_head, int len)
 		return false;
 
 	return true;
-	
+
 }
 bool CircleDealer::getErrorVec(const std::vector<CPoint>& vp, int i_head, int len, double max_error, vector<double>& error_vec
 	, CPoint2d& center, double& radius)
@@ -492,7 +492,7 @@ void CircleDealer::setInfo(const std::vector<CPoint>& vp, int i_head, int len, s
 	{
 		if (vi[index(i, n_points)].type == CPointType::CIRCLE)
 		{
-			int i_head_old = vi[index(i, n_points)].i_head ;
+			int i_head_old = vi[index(i, n_points)].i_head;
 			int len_old = vi[index(i, n_points)].len;
 			int i_back_old = i_head_old + len_old - 1;
 			i_head_old += n_points;//TODO 有点绕 多绕一圈
@@ -610,7 +610,7 @@ void CircleDealer::completeCircle(
 		bool is_full_circle = false;
 		if (n_points < 20)//很小的完整圆
 			is_full_circle = true;
-		else if (isValid(_c, n_points / 2 + 5, n_points-10))
+		else if (isValid(_c, n_points / 2 + 5, n_points - 10))
 			is_full_circle = true;
 		else if (isValid(_c, n_points / 2 + 9, n_points - 18))
 			is_full_circle = true;
@@ -632,7 +632,7 @@ void CircleDealer::completeCircle(
 	//处理刚开始被判断为线段的一部分
 	{
 		int circle_length_max = 0;
-		for (int p = 0; p <n_points; ++p)
+		for (int p = 0; p < n_points; ++p)
 		{
 			if (_vi[p].type == CPointType::CIRCLE && _vi[p].len > circle_length_max)
 				circle_length_max = _vi[p].len;
@@ -653,6 +653,7 @@ void CircleDealer::completeCircle(
 
 }
 
+#if 0
 //TODO : 这里使用了opencv，之后可以使用主要是因为计算b = (A.t()*A).inv()*A.t()*Y;
 #include "opencv2/opencv.hpp"
 void CircleDealer::fitCircleLinear(std::vector<CPoint> points, CPoint2d& center, double& radius)
@@ -681,4 +682,172 @@ void CircleDealer::fitCircleLinear(std::vector<CPoint> points, CPoint2d& center,
 	center.x = AA / (-2.0);
 	center.y = BB / (-2.0);
 	radius = std::sqrt(center.x*center.x + center.y*center.y - CC);
+}
+#endif
+//b = (A.t()*A).inv()*A.t()*Y;
+static void printSize(vector<vector<double> >A)
+{
+	cout << "R=" << A.size() << "\t" << "C=" << A[0].size() << endl;
+}
+void CircleDealer::fitCircleLinear(std::vector<CPoint> points, CPoint2d& center, double& radius)
+{
+	const int n = (int)points.size();
+	assert(n >= 3);
+	vector<vector<double> > A(n);//n*3
+	vector<vector<double> > Y(n);
+	for (int i = 0; i < n; ++i){
+		A[i].resize(3);
+		A[i][0] = 1;
+		A[i][1] = points[i].y;
+		A[i][2] = points[i].x;
+		Y[i].resize(1);
+		Y[i][0] = -points[i].x*points[i].x - points[i].y*points[i].y;
+	}
+	vector<vector<double> > AT = matrixTrans(A);
+	vector<vector<double> > ATA = matrixMultiply(AT, A);
+	vector<vector<double> > ATAI = matrixInvert(ATA);
+	vector<vector<double> > ATAI_AT = matrixMultiply(ATAI, AT);
+	vector<vector<double> > b = matrixMultiply(ATAI_AT, Y);
+
+	double AA = b[2][0];
+	double BB = b[1][0];
+	double CC = b[0][0];
+
+	center.x = AA / (-2.0);
+	center.y = BB / (-2.0);
+	radius = std::sqrt(center.x*center.x + center.y*center.y - CC);
+}
+vector<vector<double> > CircleDealer::matrixMultiply(vector<vector<double> >A, vector<vector<double> >B)
+{
+	const int M = (int)A.size();
+	const int K = (int)A[0].size();
+	const int N = (int)B[0].size();
+	assert(A[0].size() == B.size());
+	vector<vector<double> > C(M);
+	for (int m = 0; m < M; ++m){
+		C[m].resize(N);
+		for (int n = 0; n < N; ++n){
+			double sum = 0;
+			for (int k = 0; k < K; ++k)
+				sum += A[m][k] * B[k][n];
+			C[m][n] = sum;
+		}
+	}
+	return C;
+}
+vector<vector<double> > CircleDealer::matrixInvert(vector<vector<double> >A)
+{
+	const int n = (int)A.size();
+	double* data = new double[n*n];
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < n; ++j)
+			data[i*n + j] = A[i][j];
+	for (int i = 1; i < n; i++) data[i] /= data[0]; // normalize row 0
+	for (int i = 1; i < n; i++)  {
+		for (int j = i; j < n; j++)  { // do a column of L
+			double sum = 0.0;
+			for (int k = 0; k < i; k++)
+				sum += data[j*n + k] * data[k*n + i];
+			data[j*n + i] -= sum;
+		}
+		for (int j = i + 1; j < n; j++)  {  // do a row of U
+			double sum = 0.0;
+			for (int k = 0; k < i; k++)
+				sum += data[i*n + k] * data[k*n + j];
+			data[i*n + j] =
+				(data[i*n + j] - sum) / data[i*n + i];
+		}
+	}
+	for (int i = 0; i < n; i++)  // invert L
+		for (int j = i; j < n; j++)  {
+		double x = 1.0;
+		if (i != j) {
+			x = 0.0;
+			for (int k = i; k < j; k++)
+				x -= data[j*n + k] * data[k*n + i];
+		}
+		data[j*n + i] = x / data[j*n + j];
+		}
+	for (int i = 0; i < n; i++)   // invert U
+		for (int j = i; j < n; j++)  {
+		if (i == j) continue;
+		double sum = 0.0;
+		for (int k = i; k < j; k++)
+			sum += data[k*n + j] * ((i == k) ? 1.0 : data[i*n + k]);
+		data[i*n + j] = -sum;
+		}
+	for (int i = 0; i < n; i++)   // final inversion
+		for (int j = 0; j < n; j++)  {
+		double sum = 0.0;
+		for (int k = ((i > j) ? i : j); k < n; k++)
+			sum += ((j == k) ? 1.0 : data[j*n + k])*data[k*n + i];
+		data[j*n + i] = sum;
+		}
+	vector<vector<double> > B(n);
+	for (int i = 0; i < n; ++i){
+		B[i].resize(n);
+		for (int j = 0; j < n; ++j)
+			B[i][j] = data[i*n + j];
+	}
+	delete data;
+	return B;
+}
+vector<vector<double> > CircleDealer::matrixTrans(vector<vector<double> >A)
+{
+	const int m = (int)A.size();
+	const int n = (int)A[0].size();
+	vector<vector<double> > B(n);
+	for (int i = 0; i < n; ++i){
+		B[i].resize(m);
+		for (int j = 0; j < m; ++j)
+			B[i][j] = A[j][i];
+	}
+	return B;
+}
+static void printMatrix(vector<vector<double> > A)
+{
+	for (int i = 0; i < (int)A.size(); ++i){
+		for (int j = 0; j < (int)A[i].size(); ++j){
+			cout << A[i][j] << "\t";
+		}
+		cout << endl;
+	}
+}
+void CircleDealer::testMatrix()
+{
+	cout << "Test Invert" << endl;
+	int n = 2;
+	vector<vector<double> > A(n);
+	for (int i = 0; i < n; ++i){
+		A[i].resize(n);
+		for (int j = 0; j < n; ++j)
+			A[i][j] = rand()%5;
+	}
+	vector<vector<double> > AI = matrixInvert(A);
+	vector<vector<double> > E = matrixMultiply(A, AI);
+	cout << "A" << endl;
+	printMatrix(A);
+	cout << "AI" << endl;
+	printMatrix(AI);
+	cout << "A*AI" << endl;
+	printMatrix(E);
+
+	cout << "Test Trans" << endl;
+	int m = 3;
+	vector<vector<double> > B(n);
+	for (int i = 0; i < n; ++i){
+		B[i].resize(m);
+		for (int j = 0; j < m; ++j)
+			B[i][j] = rand() % 5;
+	}
+	vector<vector<double> > BT = matrixTrans(B);
+	cout << "B" << endl;
+	printMatrix(B);
+	cout << "BT" << endl;
+	printMatrix(BT);
+
+	cout << "Test matrixMultiply" << endl;
+	vector<vector<double> > BBT = matrixMultiply(B, BT);
+	cout << "BBT" << endl;
+	printMatrix(BBT);
 }

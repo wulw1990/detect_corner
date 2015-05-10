@@ -114,6 +114,8 @@ static void drawContour(
 			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(0, 0, 255);
 		if (_vinfo[p].curv_corner)
 			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(100, 100, 255);
+		if (_vinfo[p].qie_dian)
+			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(0, 255, 255);
 	}
 }
 

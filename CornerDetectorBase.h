@@ -55,6 +55,7 @@ public:
 	//	len -- 该点所属段的长度
 	//	corner -- 该点是否为所属段的端点
 	//	curv_corner -- UNKOWN部分找到的端点
+	//	qie_dian -- 切点
 	//与凌云的对接：可以认为所有corner和curv_corner被置为true的点位拐点
 	//**************************************************************
 	struct CPointInfo
@@ -64,6 +65,7 @@ public:
 		int len;
 		bool corner;
 		bool curv_corner;
+		bool qie_dian;
 		CPointInfo(){ Reset(); }
 		void Reset()
 		{
@@ -72,6 +74,7 @@ public:
 			len = -1;
 			corner=false;
 			curv_corner = false;
+			qie_dian = false;
 		}
 	};
 
