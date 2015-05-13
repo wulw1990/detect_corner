@@ -18,7 +18,6 @@
 #include "ContourDetector.h"
 #include "CornerDetectorBase.h"
 #include "CornerDetectorFit.h"
-#include "CornerDetectorCurv.h"
 #include "Tester.h"
 #include "Commander.h"
 
@@ -44,7 +43,6 @@ int main()
 
 	//test
 	CornerDetectorBase* classifier = new CornerDetectorFit();
-	//CornerDetectorBase* classifier = new CornerDetectorCurv(0.38f);
 	Tester* tester = new Tester();
 	int id_head = 0;
 	int id_back = 10;

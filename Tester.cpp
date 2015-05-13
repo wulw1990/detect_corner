@@ -15,8 +15,8 @@ static void ConvertPointFromCv(
 static void drawContours(
 	int rows,
 	int cols,
-	const vector<vector<CornerDetectorBase::CPoint> >& _vvpoint,
-	const vector<vector<CornerDetectorBase::CPointInfo> >& _vvinfo,
+	const vector<vector<CornerDetectorBase::CPoint> >& vvp,
+	const vector<vector<CornerDetectorBase::CPointInfo> >& vvi,
 	string save_name);
 
 void Tester::test(
@@ -87,50 +87,50 @@ void ConvertPointFromCv(
 	}
 }
 static void drawContour(
-	Mat& _img,
-	const std::vector<CornerDetectorBase::CPoint>& _vpoint,
-	const std::vector<CornerDetectorBase::CPointInfo>& _vinfo)
+	Mat& bgr,
+	const std::vector<CornerDetectorBase::CPoint>& vp,
+	const std::vector<CornerDetectorBase::CPointInfo>& vi)
 {
-	assert(_img.type() == CV_8UC3);
-	const int n_points = (int)_vpoint.size();
+	assert(bgr.type() == CV_8UC3);
+	const int n_points = (int)vp.size();
 	for (int p = 0; p < n_points; ++p)
 	{
-		switch (_vinfo[p].type)
+		switch (vi[p].type)
 		{
 		case CornerDetectorBase::CPointType::UNKOWN:
-			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(255, 255, 255);
+			bgr.at<Vec3b>(vp[p].y, vp[p].x) = Vec3b(255, 255, 255);
 			break;
 		case CornerDetectorBase::CPointType::CIRCLE:
-			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(255, 0, 100);
+			bgr.at<Vec3b>(vp[p].y, vp[p].x) = Vec3b(255, 0, 100);
 			break;
 		case CornerDetectorBase::CPointType::FULL_CIRCLE:
-			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(255, 255, 0);
+			bgr.at<Vec3b>(vp[p].y, vp[p].x) = Vec3b(255, 255, 0);
 			break;
 		case CornerDetectorBase::CPointType::LINE:
-			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(100, 255, 100);
+			bgr.at<Vec3b>(vp[p].y, vp[p].x) = Vec3b(100, 255, 100);
 			break;
 		}
-		if (_vinfo[p].corner)
-			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(0, 0, 255);
-		if (_vinfo[p].curv_corner)
-			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(100, 100, 255);
-		if (_vinfo[p].qie_dian)
-			_img.at<Vec3b>(_vpoint[p].y, _vpoint[p].x) = Vec3b(0, 255, 255);
+		if (vi[p].corner)
+			bgr.at<Vec3b>(vp[p].y, vp[p].x) = Vec3b(0, 0, 255);
+		if (vi[p].curv_corner)
+			bgr.at<Vec3b>(vp[p].y, vp[p].x) = Vec3b(100, 100, 255);
+		if (vi[p].qie_dian)
+			bgr.at<Vec3b>(vp[p].y, vp[p].x) = Vec3b(0, 255, 255);
 	}
 }
 
 void drawContours(
 	int rows,
 	int cols,
-	const vector<vector<CornerDetectorBase::CPoint> >& _vvpoint,
-	const vector<vector<CornerDetectorBase::CPointInfo> >& _vvinfo,
+	const vector<vector<CornerDetectorBase::CPoint> >& vvp,
+	const vector<vector<CornerDetectorBase::CPointInfo> >& vvi,
 	string save_name)
 {
 	Mat img = Mat::zeros(rows, cols, CV_8UC3);
 
-	const int n_contours = (int)_vvpoint.size();
+	const int n_contours = (int)vvp.size();
 	for (int c = 0; c <n_contours; ++c)
-		drawContour(img, _vvpoint[c], _vvinfo[c]);
+		drawContour(img, vvp[c], vvi[c]);
 
 	imwrite(save_name, img);
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "CornerDetectorBase.h"
-#include "CornerDetectorFitHelper.h"
+#include "CircleDetector.h"
+#include "LineDetector.h"
 
 class CornerDetectorFit : public CornerDetectorBase
 {
@@ -37,8 +38,8 @@ public:
 	}
 
 	CornerDetectorFit(){
-		line_dealer = new LineDealer();
-		circle_dealer = new CircleDealer();
+		line_dealer = new LineDetector();
+		circle_dealer = new CircleDetector();
 	}
 	~CornerDetectorFit(){
 		delete line_dealer;
@@ -48,8 +49,8 @@ public:
 private:
 	//LineDealer和CircleDealer的定义在CornerDetectorFitHelper中
 	//功能：协助处理线段和圆弧
-	LineDealer* line_dealer;
-	CircleDealer* circle_dealer;
+	LineDetector* line_dealer;
+	CircleDetector* circle_dealer;
 
 	//detectSegment
 	//功能：对一个轮廓进行线段检测

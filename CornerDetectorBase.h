@@ -23,8 +23,6 @@ public:
 		int y;
 		CPoint() : x(0), y(0){}
 		CPoint(int _x, int _y) : x(_x), y(_y){}
-		bool operator==(const CPoint& p)const{ return (x == p.x && y == p.y); }
-		bool operator!=(const CPoint& p)const{ return !(x == p.x && y == p.y); }
 	};
 
 	//CPoint2d——double型的坐标点
@@ -35,8 +33,6 @@ public:
 		CPoint2d() : x(0), y(0){}
 		CPoint2d(double _x, double _y) : x(_x), y(_y){}
 		CPoint2d(CornerDetectorBase::CPoint p) : x(p.x), y(p.y){}
-		bool operator==(const CPoint2d& p)const{ return (x == p.x && y == p.y); }
-		bool operator!=(const CPoint2d& p)const{ return !(x == p.x && y == p.y); }
 	};
 
 	//**************************************************************
@@ -118,7 +114,7 @@ protected:
 	//输入：i——第几个点
 	//输出：n——所在轮廓一共有几个点
 	//**************************************************************
-	int index(int i, int n)
+	int getIndex(int i, int n)
 	{
 		i %= n;
 		if (i < 0)
@@ -126,3 +122,7 @@ protected:
 		return i;
 	}
 };
+//Note:
+//wrong : for (int i = i_head; i <= i_back; ++i) wrong
+//right：Note:for (int i = 0; i < len; ++i)、
+//getIndex(i_head+i, N)
