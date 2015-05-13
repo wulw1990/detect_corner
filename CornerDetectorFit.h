@@ -79,6 +79,18 @@ private:
 	//其他参数（输入）：R -- 计算曲率时使用的半径，threshcurv -- 阈值
 	void setHighCurvature(vector<CPoint>& vp, vector<CPointInfo>& vi, int R, double threshcurv);
 
+	//mergeNeignborCorner
+	//功能：合并相邻拐点
+	//输入：vi -- 与vp对应的每个点的信息
+	//输出：vi -- 与vp对应的每个点的信息
+	void mergeNeignborCorner(vector<CPointInfo>& vi);
+
+	//checkNeignborCorner
+	//功能：检查相邻拐点
+	//输入：vi -- 与vp对应的每个点的信息
+	//输出：vi -- 与vp对应的每个点的信息
+	void checkNeignborCorner(vector<CPointInfo>& vi);
+
 	//setQieDian
 	//功能：设置切点
 	//输入：vi -- 与vp对应的每个点的信息

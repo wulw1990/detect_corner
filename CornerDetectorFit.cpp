@@ -1,5 +1,6 @@
 #include "CornerDetectorFit.h"
 #include <iostream>
+#include <cassert>
 
 #define DEBUG 1
 
@@ -16,8 +17,10 @@ void CornerDetectorFit::detect(
 		detectCircleAfterSegment(vvp[c], vvi[c]);//检测圆弧
 		line_dealer->merge(vvp[c], vvi[c]);//线段的合并和去除短线段
 		setUnknown(vvi[c]);//将不确定部分置为未知
-		//setHighCurvature(vvp[c], vvi[c], 3, 0.38);//对位置曲线部分进行拐点检测
-		//setQieDian(vvi[c]);//设置切点
+		setHighCurvature(vvp[c], vvi[c], 3, 0.38);//对位置曲线部分进行拐点检测
+		mergeNeignborCorner(vvi[c]);//合并拐点
+		checkNeignborCorner(vvi[c]);//合并拐点
+		setQieDian(vvi[c]);//设置切点
 	}
 }
 void CornerDetectorFit::detectSegment(
@@ -32,6 +35,7 @@ void CornerDetectorFit::detectSegment(
 		i += line_dealer->detect(vp, i, len_max, vi);
 	}
 }
+
 void CornerDetectorFit::detectCircleAfterSegment(
 	vector<CPoint>& vp,
 	vector<CPointInfo>& vi)
@@ -76,54 +80,69 @@ void CornerDetectorFit::setHighCurvature(vector<CPoint>& vp, vector<CPointInfo>&
 {
 	//int R = 3;
 	//double threshcurv = 0.38f;
-	int n_points = (int)vp.size();
-	if (n_points < (R * 2 + 1))
-		return;
-	vector<double> thetas(n_points);
-	for (int ip = 0; ip < n_points; ++ip)
+	int N = (int)vp.size();
+	if (N < (R * 2 + 1)) return;
+	vector<double> thetas(N);
+	for (int i = 0; i < N; ++i)
 	{
-		if (vi[ip].type != CPointType::UNKOWN)
-		{
-			thetas[ip] = 0;
+		if (vi[i].type != CPointType::UNKOWN){
+			thetas[i] = 0;
 			continue;
 		}
-		int ipl = ip - R;
-		ipl = (ipl < 0 ? ipl + n_points : ipl);
-		int ipr = ip + R;
-		ipr = (ipr >= n_points ? ipr - n_points : ipr);
-
-		CPoint2d p(vp[ip]);
-		CPoint2d pl(vp[ipl]);
-		CPoint2d pr(vp[ipr]);
+		CPoint2d p(vp[getIndex(i, N)]);
+		CPoint2d pl(vp[getIndex(i - R, N)]);
+		CPoint2d pr(vp[getIndex(i + R, N)]);
 
 		double h = getTriangleHeight(pl, p, pr);
-		thetas[ip] = asin(h / R);
+		thetas[i] = asin(h / R);
 	}
-	for (int ip = 0; ip < n_points; ++ip)
+	for (int i = 0; i < N; ++i)
 	{
-		int ipl = ip - 1;
-		ipl = (ipl < 0 ? ipl + n_points : ipl);
-		int ipr = ip + 1;
-		ipr = (ipr >= n_points ? ipr - n_points : ipr);
+		int i_pre = getIndex(i - 1, N);
+		int i_nex = getIndex(i + 1, N);
 
-		if (thetas[ip]>threshcurv && thetas[ip] >= thetas[ipl] && thetas[ip] >= thetas[ipr])
-			vi[ip].curv_corner = true;
+		if (thetas[i]>threshcurv && thetas[i] > thetas[i_pre] && thetas[i] > thetas[i_nex]
+			&& !vi[i_pre].corner && !vi[i_nex].corner)
+			vi[i].curv_corner = true;
+	}
+}
+void CornerDetectorFit::mergeNeignborCorner(vector<CPointInfo>& vi)
+{
+	const int N = (int)vi.size();
+	for (int i = 0; i < N; ++i){
+		int i_nex = getIndex(i + 1, N);
+		if (vi[i].corner && vi[i_nex].corner){
+			if (vi[i].type == CPointType::LINE)
+				vi[i_nex].corner = false;
+			else
+				vi[i].corner = false;
+		}
+	}
+}
+void CornerDetectorFit::checkNeignborCorner(vector<CPointInfo>& vi)
+{
+	const int N = (int)vi.size();
+	for (int i = 0; i < N; ++i){
+		int i_nex = getIndex(i + 1, N);
+		assert(!(vi[i].corner && vi[i_nex].corner));
+		assert(!(vi[i].corner && vi[i_nex].curv_corner));
+		assert(!(vi[i].curv_corner && vi[i_nex].corner));
 	}
 }
 void CornerDetectorFit::setQieDian(vector<CPointInfo>& vi)
 {
-	const int n = (int)vi.size();
-	for (int i = 0; i < n; ++i){
-		int i_pre = getIndex(i - 1, n);
-		int i_cur = getIndex(i , n);
-		int i_nex = getIndex(i + 1, n);
-		if (vi[i_cur].corner == true && vi[i_cur].type == CPointType::LINE && vi[i_pre].type == CPointType::CIRCLE)
-			vi[i_cur].qie_dian = true;
-		else if (vi[i_cur].corner == true && vi[i_cur].type == CPointType::CIRCLE && vi[i_pre].type == CPointType::LINE)
-			vi[i_cur].qie_dian = true;
-		else  if (vi[i_cur].corner == true && vi[i_cur].type == CPointType::CIRCLE && vi[i_nex].type == CPointType::LINE)
-			vi[i_cur].qie_dian = true;
-		else  if (vi[i_cur].corner == true && vi[i_cur].type == CPointType::CIRCLE && vi[i_nex].type == CPointType::LINE)
-			vi[i_cur].qie_dian = true;
+	const int N = (int)vi.size();
+	for (int i = 0; i < N; ++i){
+		int i_pre = getIndex(i - 1, N);
+		int i_nex = getIndex(i + 1, N);
+		if (!vi[i].corner) continue;
+		if (vi[i].type == CPointType::LINE){
+			if (vi[i_pre].type == CPointType::CIRCLE || vi[i_nex].type == CPointType::CIRCLE)
+				vi[i].qie_dian = true;
+		}
+		else if (vi[i].type == CPointType::CIRCLE){
+			if (vi[i_pre].type == CPointType::LINE || vi[i_nex].type == CPointType::LINE)
+				vi[i].qie_dian = true;
+		}
 	}
 }
