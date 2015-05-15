@@ -7,8 +7,16 @@
 
 LineDetector::LineDetector()
 {
-	length_thresh = { 5, 10, 100, 1000 };
-	error_thresh = { 0.1, 1.1, 2.1 };
+	length_thresh.clear();
+	length_thresh.push_back(5);
+	length_thresh.push_back(10);
+	length_thresh.push_back(100);
+	length_thresh.push_back(1000);
+
+	error_thresh.clear();
+	error_thresh.push_back(0.1);
+	error_thresh.push_back(1.1);
+	error_thresh.push_back(2.1);
 	len_sure = 20;
 }
 void LineDetector::merge(vector<CPoint>& vp, vector<CPointInfo>& vi)

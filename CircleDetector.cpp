@@ -6,8 +6,15 @@ static const double PI = 3.14159265354;
 
 CircleDetector::CircleDetector()
 {
-	length_thresh = { 10, 20, 1000 };
-	error_thresh = { 0.6, 1.0 };
+	length_thresh.clear();
+	length_thresh.push_back(10);
+	length_thresh.push_back(20);
+	length_thresh.push_back(1000);
+
+	error_thresh.clear();
+	error_thresh.push_back(0.6);
+	error_thresh.push_back(1.0);
+
 	radius_min = 5;
 	radius_max = 100;
 	radian_min = 60 / 180.0 * PI;
